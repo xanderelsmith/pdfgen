@@ -1,13 +1,17 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 ///Package imports
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-// ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:pdfgen/src/features/pdfgenerate/data/model/report.dart';
+import 'package:pdfgen/src/features/pdfgenerate/data/savefilemobile.dart';
 
 ///Pdf import
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-
-import '../../data/savefilemobile.dart';
 
 class InvoicePdf extends StatefulWidget {
   const InvoicePdf({super.key});
@@ -63,20 +67,18 @@ class _InvoicePdfState extends State<InvoicePdf> {
     document.pageSettings.margins.all = 20;
     //Add page to the PDF
     final PdfPage page = document.pages.add();
+    final PdfPage page3 = document.pages.add();
     //Get page client size
     final Size pageSize = page.getClientSize();
 
-    //Draw rectangle
-    page.graphics.drawRectangle(
-      bounds: Rect.fromLTWH(0, 0, pageSize.width, pageSize.height),
-      // pen: PdfPen(PdfColor(142, 170, 219)
-    );
     //Generate PDF grid.
-    final PdfGrid grid = _getGrid(pageSize);
+    final PdfGrid grid = _getGrid(pageSize, page);
     //Draw the header section by creating text element
     final PdfLayoutResult result = _drawHeader(page, pageSize, grid);
     //Draw grid
-    _drawGrid(page, grid, result);
+
+    _drawGrid(page, grid, result); //Draw rectangle
+    drawhereditaryTable(page3, pageSize);
     //Add invoice footer
     // _drawFooter(page, pageSize);
     //Save and dispose the document.
@@ -84,6 +86,108 @@ class _InvoicePdfState extends State<InvoicePdf> {
     document.dispose();
     //Launch file.
     await FileSaveHelper.saveAndLaunchFile(bytes, 'EmmanuelGEnpdf.pdf');
+  }
+
+  void drawhereditaryTable(PdfPage page, Size pageSize) {
+    var baseBounds = Rect.fromLTWH(0, 150, pageSize.width, 20);
+
+    page.graphics.drawRectangle(
+        brush: PdfSolidBrush(PdfColor(91, 126, 215)), bounds: baseBounds);
+    page.graphics.drawString('Hereditary and family History',
+        PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(130, 155, pageSize.width - 400, 100),
+        brush: PdfBrushes.white,
+        format: PdfStringFormat(
+            alignment: PdfTextAlignment.right,
+            lineAlignment: PdfVerticalAlignment.top));
+    page.graphics.drawRectangle(
+        brush: PdfBrushes.lightSteelBlue,
+        pen: PdfPen(PdfColor(142, 170, 219)),
+        bounds: Rect.fromLTWH(0, 170, pageSize.width, 20));
+    page.graphics.drawString(
+        'Mom', PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(pageSize.width / 2.34, 175, 50, 50));
+    page.graphics.drawString(
+        'Dad', PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(pageSize.width / 1.74, 175, 50, 50));
+    page.graphics.drawString(
+        'Siblings', PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(pageSize.width / 1.35, 175, 50, 50));
+    page.graphics.drawString(
+        'Not Known', PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(pageSize.width / 1.15, 175, 50, 50));
+
+    List<HereditaryRelationsData> hereditarydataList = [
+      HereditaryRelationsData(
+        name: 'Alcoholismo',
+        momHas: true,
+        dadHas: true,
+        siblingsHave: true,
+        othersHave: false,
+      ),
+      HereditaryRelationsData(
+        name: 'Artritis',
+      ),
+      HereditaryRelationsData(
+        name: 'Cancer',
+      ),
+      HereditaryRelationsData(
+        name: 'Depresion',
+      ),
+      HereditaryRelationsData(
+        name: 'Diabetes miletus',
+      ),
+      HereditaryRelationsData(
+        name: 'Obesity',
+      ),
+      HereditaryRelationsData(name: 'Smoking'),
+    ];
+
+    for (var i = 0; i < hereditarydataList.length; i++) {
+      heridiraryTile(page, pageSize, i,
+          hereditaryRelationsData: hereditarydataList[i]);
+    }
+  }
+
+  void heridiraryTile(PdfPage page, pageSize, i,
+      {required HereditaryRelationsData hereditaryRelationsData}) {
+    var top = (190 + 20 * (i)).toDouble();
+    page.graphics.drawRectangle(
+        pen: PdfPen(PdfColor(142, 170, 219)),
+        bounds: Rect.fromLTWH(0, top, pageSize.width, 20));
+    page.graphics.drawRectangle(
+        brush: PdfBrushes.lightSteelBlue,
+        pen: PdfPen(PdfColor(142, 170, 219)),
+        bounds: Rect.fromLTWH(0, top, pageSize.width / 3, 20));
+    page.graphics.drawString(hereditaryRelationsData.name,
+        PdfStandardFont(PdfFontFamily.helvetica, 10),
+        bounds: Rect.fromLTWH(50, top + 5, 200, 50));
+    double width = 10;
+    double height = 10;
+    page.graphics.drawImage(
+        PdfBitmap(File(hereditaryRelationsData.momHas
+                ? 'asset/image/closed.png'
+                : 'asset/image/open.png')
+            .readAsBytesSync()),
+        Rect.fromLTWH(pageSize.width / 2.3, top + 5, width, height));
+    page.graphics.drawImage(
+        PdfBitmap(File(hereditaryRelationsData.dadHas
+                ? 'asset/image/closed.png'
+                : 'asset/image/open.png')
+            .readAsBytesSync()),
+        Rect.fromLTWH(pageSize.width / 1.7, top + 5, width, height));
+    page.graphics.drawImage(
+        PdfBitmap(File(hereditaryRelationsData.siblingsHave
+                ? 'asset/image/closed.png'
+                : 'asset/image/open.png')
+            .readAsBytesSync()),
+        Rect.fromLTWH(pageSize.width / 1.3, top + 5, width, height));
+    page.graphics.drawImage(
+        PdfBitmap(File(hereditaryRelationsData.othersHave
+                ? 'asset/image/closed.png'
+                : 'asset/image/open.png')
+            .readAsBytesSync()),
+        Rect.fromLTWH(pageSize.width / 1.1, top + 5, width, height));
   }
 
   //Draws the invoice header
@@ -145,7 +249,8 @@ class _InvoicePdfState extends State<InvoicePdf> {
   }
 
   //Draws the grid
-  void _drawGrid(PdfPage page, PdfGrid grid, PdfLayoutResult result) {
+  PdfLayoutResult _drawGrid(
+      PdfPage page, PdfGrid grid, PdfLayoutResult result) {
     Rect? totalPriceCellBounds;
     Rect? quantityCellBounds;
     //Invoke the beginCellLayout event.
@@ -157,24 +262,12 @@ class _InvoicePdfState extends State<InvoicePdf> {
         quantityCellBounds = args.bounds;
       }
     };
+    log(result!.bounds.toString());
     //Draw the PDF grid and get the result.
     result = grid.draw(
         page: page, bounds: Rect.fromLTWH(0, result.bounds.bottom + 40, 0, 0))!;
-    // //Draw grand total.
-    // page.graphics.drawString('Grand Total',
-    //     PdfStandardFont(PdfFontFamily.helvetica, 9, style: PdfFontStyle.bold),
-    //     bounds: Rect.fromLTWH(
-    //         quantityCellBounds!.left,
-    //         result.bounds.bottom + 10,
-    //         quantityCellBounds!.width,
-    //         quantityCellBounds!.height));
-    // page.graphics.drawString(_getTotalAmount(grid).toString(),
-    //     PdfStandardFont(PdfFontFamily.helvetica, 9, style: PdfFontStyle.bold),
-    //     bounds: Rect.fromLTWH(
-    //         totalPriceCellBounds!.left,
-    //         result.bounds.bottom + 10,
-    //         totalPriceCellBounds!.width,
-    //         totalPriceCellBounds!.height));
+    log(result!.bounds.toString());
+    return result;
   }
 
   //Draw the invoice footer data.
@@ -194,106 +287,7 @@ class _InvoicePdfState extends State<InvoicePdf> {
         bounds: Rect.fromLTWH(pageSize.width - 30, pageSize.height - 70, 0, 0));
   }
 
-  //Create PDF grid and return
-  PdfGrid _getGrid(Size pageSize) {
-    //Create a PDF grid
-    final PdfGrid grid = PdfGrid();
-    //Secify the columns count to the grid.
-
-    grid.columns.add(count: 5);
-    //Create the header row of the grid.
-    final PdfGridRow firstheaderRow = grid.headers.add(1)[0];
-
-    var headercell = firstheaderRow.cells[0];
-    headercell.value = 'PADECIMIENTO ACTUAL';
-
-    headercell.style = PdfGridCellStyle(
-      cellPadding: PdfPaddings(),
-    );
-    headercell.stringFormat = PdfStringFormat(
-        alignment: PdfTextAlignment.center,
-        lineAlignment: PdfVerticalAlignment.middle);
-    final PdfGridRow headerRow = grid.headers.add(1)[1];
-    //Set style
-    firstheaderRow.style.backgroundBrush =
-        PdfSolidBrush(PdfColor(68, 014, 196));
-    firstheaderRow.style.textBrush = PdfBrushes.white;
-
-    _formDetails('?ACTALMENTE SIENTES DE SALUD?', 'Si', grid);
-    _formDetails(
-        'DIARREA CON SANGRE',
-        additionalComment: 'Yes i have diarhoea',
-        'Si',
-        grid);
-    _formDetails('COMENTARIOS ADICIONALES', 'Si', grid,
-        additionalComment:
-            'Weakness, tiredness, have you turned pale, are you short of breath when exercising');
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-    _formDetails('LJ-0192', 'Si', grid);
-    _formDetails('FK-5136', 'Si', grid);
-    _formDetails('HL-U509', 'Si', grid);
-
-    grid.applyBuiltInStyle(
-      PdfGridBuiltInStyle.listTable4Accent5,
-    );
-    // grid.columns[1].width = 200;
-    grid.columns[0].width = pageSize.width / 1.6;
-    grid.columns[0].format = PdfStringFormat(
-      alignment: PdfTextAlignment.left,
-      lineAlignment: PdfVerticalAlignment.top,
-    );
-
-    for (int i = 0; i < headerRow.cells.count; i++) {
-      headerRow.cells[i].stringFormat = PdfStringFormat(
-          alignment: PdfTextAlignment.center,
-          lineAlignment: PdfVerticalAlignment.middle);
-    }
-    for (int i = 0; i < grid.rows.count; i++) {
-      final PdfGridRow row = grid.rows[i];
-      for (int j = 0; j < row.cells.count; j++) {
-        final PdfGridCell cell = row.cells[j];
-        if (j == 0) {
-          cell
-            ..stringFormat = PdfStringFormat(
-              alignment: PdfTextAlignment.left,
-            )
-            ..style;
-        }
-        cell.style.cellPadding =
-            PdfPaddings(bottom: 10, left: 5, right: 5, top: 10);
-      }
-    }
-    return grid;
-  }
-
-  //Create and row for the grid.
-  void _formDetails(String question, String total, PdfGrid grid,
-      {String? additionalComment}) {
-    final PdfGridRow row = grid.rows.add();
-    row.cells[0].value =
-        '$question${additionalComment != null ? '\n\nComentarios Adicionales:\t$additionalComment' : ''}';
-
-    // row.cells[1].value = response;
-
-    // row.cells[3].value = quantity.toString();
-    row.cells[4].value = total.toString();
-  }
-
-  //Get the total amount.
+//Get the total amount.
   double _getTotalAmount(PdfGrid grid) {
     double total = 0;
     for (int i = 0; i < grid.rows.count; i++) {
@@ -303,4 +297,117 @@ class _InvoicePdfState extends State<InvoicePdf> {
     }
     return 10;
   }
+}
+
+//Create PDF grid and return
+PdfGrid _getGrid(Size pageSize, PdfPage page) {
+  //Create a PDF grid
+  final PdfGrid grid = PdfGrid();
+  //Secify the columns count to the grid.
+
+  grid.columns.add(count: 5);
+  //Create the header row of the grid.
+  final PdfGridRow firstheaderRow = grid.headers.add(1)[0];
+
+  var headercell = firstheaderRow.cells[0];
+  headercell.value = 'PADECIMIENTO ACTUAL';
+
+  headercell.style = PdfGridCellStyle(
+    cellPadding: PdfPaddings(),
+  );
+  headercell.stringFormat = PdfStringFormat(
+      alignment: PdfTextAlignment.center,
+      lineAlignment: PdfVerticalAlignment.middle);
+  final PdfGridRow headerRow = grid.headers.add(1)[1];
+  //Set style
+  firstheaderRow.style.backgroundBrush = PdfSolidBrush(PdfColor(68, 014, 196));
+  firstheaderRow.style.textBrush = PdfBrushes.white;
+
+  _formDetails('?ACTALMENTE SIENTES DE SALUD?', 'Si', grid);
+  _formDetails(
+      'DIARREA CON SANGRE',
+      additionalComment: 'Yes i have diarhoea',
+      'Si',
+      grid);
+  _formDetails('COMENTARIOS ADICIONALES', 'Si', grid,
+      additionalComment:
+          'Weakness, tiredness, have you turned pale, are you short of breath when exercising');
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+  _formDetails('LJ-0192', 'Si', grid);
+  _formDetails('FK-5136', 'Si', grid);
+  _formDetails('HL-U509', 'Si', grid);
+
+  grid.applyBuiltInStyle(
+    PdfGridBuiltInStyle.listTable4Accent5,
+  );
+  // grid.columns[1].width = 200;
+  grid.columns[0].width = pageSize.width / 1.6;
+  grid.columns[0].format = PdfStringFormat(
+    alignment: PdfTextAlignment.left,
+    lineAlignment: PdfVerticalAlignment.top,
+  );
+
+  for (int i = 0; i < headerRow.cells.count; i++) {
+    headerRow.cells[i].stringFormat = PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle);
+  }
+  var bounds = Rect.fromLTWH(0, 150, pageSize.width, 20);
+  for (int i = 0; i < grid.rows.count; i++) {
+    final PdfGridRow row = grid.rows[i];
+    for (int j = 0; j < row.cells.count; j++) {
+      final PdfGridCell cell = row.cells[j];
+      if (j == 0) {
+        cell
+          ..stringFormat = PdfStringFormat(
+            alignment: PdfTextAlignment.left,
+          )
+          ..style;
+      }
+
+      cell.style.cellPadding =
+          PdfPaddings(bottom: 10, left: 5, right: 5, top: 10);
+    }
+  }
+  return grid;
+}
+
+//Create and row for the grid.
+void _formDetails(String question, String total, PdfGrid grid,
+    {String? additionalComment, bool? isSubCategory}) {
+  final PdfGridRow row = grid.rows.add();
+  row.cells[0].value =
+      '$question${additionalComment != null ? '\n\nComentarios Adicionales:\t$additionalComment' : ''}';
+  if (isSubCategory = true) {}
+
+  row.cells[4].value = total.toString();
+}
+
+class HereditaryRelationsData {
+  final String name;
+  final bool momHas;
+  final bool dadHas;
+  final bool siblingsHave;
+  final bool othersHave;
+  HereditaryRelationsData({
+    required this.name,
+    this.momHas = false,
+    this.dadHas = false,
+    this.siblingsHave = false,
+    this.othersHave = false,
+  });
 }
