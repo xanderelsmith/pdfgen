@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdfgen/src/features/pdfgenerate/data/model/report.dart';
 import 'package:pdfgen/src/features/pdfgenerate/data/save_file_web.dart';
@@ -164,9 +165,13 @@ class _InvoicePdfState extends State<InvoicePdf> {
         bounds: Rect.fromLTWH(50, top + 5, 200, 50));
     double width = 10;
     double height = 10;
+    Future<List<int>> _readImageData(String name) async {
+      final ByteData data = await rootBundle.load('images/pdf/$name');
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    }
 
-    Uint8List closedImage = await File('asset/image/closed.png').readAsBytes();
-    Uint8List openImage = await File('asset/image/open.png').readAsBytes();
+    List<int> closedImage = await _readImageData('asset/image/closed.png');
+    List<int> openImage = await _readImageData('asset/image/open.png');
     page.graphics.drawImage(
         PdfBitmap(hereditaryRelationsData.momHas ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 2.3, top + 5, width, height));
