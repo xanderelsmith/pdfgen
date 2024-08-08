@@ -49,8 +49,7 @@ class _InvoicePdfState extends State<InvoicePdf> {
               ),
               onPressed: () async {
                 Future<List<int>> _readImageData(String name) async {
-                  final ByteData data =
-                      await rootBundle.load('images/pdf/$name');
+                  final ByteData data = await rootBundle.load(name);
                   return data.buffer
                       .asUint8List(data.offsetInBytes, data.lengthInBytes);
                 }
