@@ -47,7 +47,23 @@ class _InvoicePdfState extends State<InvoicePdf> {
                 padding: WidgetStateProperty.all(
                     const EdgeInsets.symmetric(vertical: 15, horizontal: 15)),
               ),
-              onPressed: _generatePDF,
+              onPressed: () async {
+                Future<List<int>> _readImageData(String name) async {
+                  final ByteData data =
+                      await rootBundle.load('images/pdf/$name');
+                  return data.buffer
+                      .asUint8List(data.offsetInBytes, data.lengthInBytes);
+                }
+
+                List<int> closedImage =
+                    await _readImageData('asset/image/closed.png');
+                List<int> openImage =
+                    await _readImageData('asset/image/open.png');
+                _generatePDF(
+                  closedImage,
+                  openImage,
+                );
+              },
               child: const Text('Generate PDF',
                   style: TextStyle(color: Colors.white)),
             ))
@@ -57,7 +73,10 @@ class _InvoicePdfState extends State<InvoicePdf> {
     ));
   }
 
-  Future<void> _generatePDF() async {
+  Future<void> _generatePDF(
+    closedImage,
+    openImage,
+  ) async {
     final reportData = Report(
         location: 'location',
         companyname: 'companyname',
@@ -79,7 +98,12 @@ class _InvoicePdfState extends State<InvoicePdf> {
     //Draw grid
 
     _drawGrid(page, grid, result); //Draw rectangle
-    drawhereditaryTable(page3, pageSize);
+    drawhereditaryTable(
+      page3,
+      pageSize,
+      closedImage,
+      openImage,
+    );
     //Add invoice footer
     // _drawFooter(page, pageSize);
     //Save and dispose the document.
@@ -89,7 +113,12 @@ class _InvoicePdfState extends State<InvoicePdf> {
     await FileSaveHelper.saveAndLaunchFile(bytes, 'EmmanuelGEnpdf.pdf');
   }
 
-  void drawhereditaryTable(PdfPage page, Size pageSize) {
+  void drawhereditaryTable(
+    PdfPage page,
+    Size pageSize,
+    closedImage,
+    openImage,
+  ) {
     var baseBounds = Rect.fromLTWH(0, 150, pageSize.width, 20);
 
     page.graphics.drawRectangle(
@@ -145,12 +174,12 @@ class _InvoicePdfState extends State<InvoicePdf> {
     ];
 
     for (var i = 0; i < hereditarydataList.length; i++) {
-      heridiraryTile(page, pageSize, i,
+      heridiraryTile(page, pageSize, i, closedImage, openImage,
           hereditaryRelationsData: hereditarydataList[i]);
     }
   }
 
-  void heridiraryTile(PdfPage page, pageSize, i,
+  void heridiraryTile(PdfPage page, pageSize, i, closedImage, openImage,
       {required HereditaryRelationsData hereditaryRelationsData}) async {
     var top = (190 + 20 * (i)).toDouble();
     page.graphics.drawRectangle(
@@ -165,13 +194,7 @@ class _InvoicePdfState extends State<InvoicePdf> {
         bounds: Rect.fromLTWH(50, top + 5, 200, 50));
     double width = 10;
     double height = 10;
-    Future<List<int>> _readImageData(String name) async {
-      final ByteData data = await rootBundle.load(name);
-      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    }
 
-    List<int> closedImage = await _readImageData('asset/image/closed.png');
-    List<int> openImage = await _readImageData('asset/image/open.png');
     page.graphics.drawImage(
         PdfBitmap(hereditaryRelationsData.momHas ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 2.3, top + 5, width, height));
