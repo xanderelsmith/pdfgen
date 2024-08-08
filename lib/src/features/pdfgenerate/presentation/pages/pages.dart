@@ -8,7 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdfgen/src/features/pdfgenerate/data/model/report.dart';
-import 'package:pdfgen/src/features/pdfgenerate/data/savefilemobile.dart';
+import 'package:pdfgen/src/features/pdfgenerate/data/save_file_web.dart';
 
 ///Pdf import
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -150,7 +150,7 @@ class _InvoicePdfState extends State<InvoicePdf> {
   }
 
   void heridiraryTile(PdfPage page, pageSize, i,
-      {required HereditaryRelationsData hereditaryRelationsData}) {
+      {required HereditaryRelationsData hereditaryRelationsData}) async {
     var top = (190 + 20 * (i)).toDouble();
     page.graphics.drawRectangle(
         pen: PdfPen(PdfColor(142, 170, 219)),
@@ -164,29 +164,21 @@ class _InvoicePdfState extends State<InvoicePdf> {
         bounds: Rect.fromLTWH(50, top + 5, 200, 50));
     double width = 10;
     double height = 10;
+
+    Uint8List closedImage = await File('asset/image/closed.png').readAsBytes();
+    Uint8List openImage = await File('asset/image/open.png').readAsBytes();
     page.graphics.drawImage(
-        PdfBitmap(File(hereditaryRelationsData.momHas
-                ? 'asset/image/closed.png'
-                : 'asset/image/open.png')
-            .readAsBytesSync()),
+        PdfBitmap(hereditaryRelationsData.momHas ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 2.3, top + 5, width, height));
     page.graphics.drawImage(
-        PdfBitmap(File(hereditaryRelationsData.dadHas
-                ? 'asset/image/closed.png'
-                : 'asset/image/open.png')
-            .readAsBytesSync()),
+        PdfBitmap(hereditaryRelationsData.dadHas ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 1.7, top + 5, width, height));
     page.graphics.drawImage(
-        PdfBitmap(File(hereditaryRelationsData.siblingsHave
-                ? 'asset/image/closed.png'
-                : 'asset/image/open.png')
-            .readAsBytesSync()),
+        PdfBitmap(
+            hereditaryRelationsData.siblingsHave ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 1.3, top + 5, width, height));
     page.graphics.drawImage(
-        PdfBitmap(File(hereditaryRelationsData.othersHave
-                ? 'asset/image/closed.png'
-                : 'asset/image/open.png')
-            .readAsBytesSync()),
+        PdfBitmap(hereditaryRelationsData.othersHave ? closedImage : openImage),
         Rect.fromLTWH(pageSize.width / 1.1, top + 5, width, height));
   }
 
